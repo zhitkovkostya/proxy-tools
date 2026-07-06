@@ -1,13 +1,12 @@
 import { useEffect } from "react";
 import type { RefObject } from "react";
-import type { FieldKey } from "./field-info";
+import type { ActiveId } from "./field-info";
 
 export interface TuiKeyboardOptions {
   /** Container holding the `.row[data-key]` form rows (the left pane). */
   containerRef: RefObject<HTMLElement | null>;
-  activeKey: FieldKey | null;
-  setActiveKey: (key: FieldKey) => void;
-  onCopy: () => void;
+  activeKey: ActiveId | null;
+  setActiveKey: (id: ActiveId | null) => void;
   onToggleFormat: () => void;
 }
 
@@ -15,14 +14,13 @@ export interface TuiKeyboardOptions {
 // rows (so conditional/removed fields are handled for free):
 //   ↑↓ / Tab / Enter  move between rows
 //   ← →               change the select/switch inside the active row
-//   c / f             copy output / toggle output format
+//   f                 toggle output format
 // The DOM `[data-key]` order is the source of truth for navigation; ← → drive
 // the row's native <select>/switch so all existing onChange logic is reused.
 export function useTuiKeyboard({
   containerRef,
   activeKey,
   setActiveKey,
-  onCopy,
   onToggleFormat,
 }: TuiKeyboardOptions) {
   useEffect(() => {
@@ -31,7 +29,7 @@ export function useTuiKeyboard({
         ? Array.from(containerRef.current.querySelectorAll<HTMLElement>("[data-key]"))
         : [];
 
-    const keyOf = (row: HTMLElement) => row.dataset.key as FieldKey;
+    const keyOf = (row: HTMLElement) => row.dataset.key as ActiveId;
 
     const activeRow = (): HTMLElement | undefined =>
       rowsOf().find((r) => keyOf(r) === activeKey);
@@ -100,8 +98,9 @@ export function useTuiKeyboard({
         move(1);
         return;
       }
-      if (e.key === "Escape" && typing) {
-        (el as HTMLElement).blur();
+      if (e.key === "Escape") {
+        if (typing) (el as HTMLElement).blur();
+        setActiveKey(null);
         return;
       }
 
@@ -114,11 +113,11 @@ export function useTuiKeyboard({
         }
       }
 
+      // Let the browser handle native shortcuts (Ctrl/Cmd+C copy, etc.).
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
       if (!typing) {
-        if (e.key === "c") {
-          e.preventDefault();
-          onCopy();
-        } else if (e.key === "f") {
+        if (e.key === "f") {
           e.preventDefault();
           onToggleFormat();
         }
@@ -127,5 +126,5 @@ export function useTuiKeyboard({
 
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [containerRef, activeKey, setActiveKey, onCopy, onToggleFormat]);
+  }, [containerRef, activeKey, setActiveKey, onToggleFormat]);
 }

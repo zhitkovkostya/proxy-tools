@@ -1,6 +1,6 @@
 import { Card } from "~/components/ui/Card";
 import { Select, Switch, TextInput } from "~/components/ui/inputs";
-import type { FieldKey } from "../field-info";
+import type { ActiveId, FieldKey } from "../field-info";
 import { DNS_TYPE_OPTIONS } from "../options";
 import type { ProfileStore } from "../useProfileState";
 import { FieldRow } from "./FieldLabel";
@@ -8,8 +8,8 @@ import { RuleEditor } from "./RuleEditor";
 
 interface SectionProps {
   store: ProfileStore;
-  activeKey: FieldKey | null;
-  onActivate: (key: FieldKey) => void;
+  activeKey: ActiveId | null;
+  onActivate: (id: ActiveId) => void;
 }
 
 const SubLabel = ({ children }: { children: string }) => (

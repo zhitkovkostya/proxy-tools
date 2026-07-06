@@ -1,7 +1,7 @@
 import { Plus, Trash2 } from "lucide-react";
 import { Select, TextArea } from "~/components/ui/inputs";
 import { linesOf } from "~/lib/encoding";
-import type { FieldKey } from "../field-info";
+import type { ActiveId, FieldKey } from "../field-info";
 import { OUTBOUND_OPTIONS } from "../options";
 import type { Rule } from "../types";
 import { FieldRow } from "./FieldLabel";
@@ -9,8 +9,8 @@ import { FieldRow } from "./FieldLabel";
 export interface RuleEditorProps {
   rules: Rule[];
   onChange: (updater: (prev: Rule[]) => Rule[]) => void;
-  activeKey: FieldKey | null;
-  onActivate: (key: FieldKey) => void;
+  activeKey: ActiveId | null;
+  onActivate: (id: ActiveId) => void;
 }
 
 export function RuleEditor({ rules, onChange, activeKey, onActivate }: RuleEditorProps) {
@@ -24,11 +24,10 @@ export function RuleEditor({ rules, onChange, activeKey, onActivate }: RuleEdito
       { name: "New rule", domains: [], ips: [], outboundTag: "proxy" },
     ]);
 
-  const rowProps = (key: FieldKey) => ({
-    fieldKey: key,
-    active: activeKey === key,
-    onActivate,
-  });
+  const rowProps = (key: FieldKey, idx: number) => {
+    const id = `${key}#${idx}` as ActiveId;
+    return { fieldKey: key, id, active: activeKey === id, onActivate };
+  };
 
   return (
     <div className="space-y-1">
@@ -49,21 +48,21 @@ export function RuleEditor({ rules, onChange, activeKey, onActivate }: RuleEdito
               <Trash2 size={12} /> удалить
             </button>
           </div>
-          <FieldRow {...rowProps("ruleDomain")}>
+          <FieldRow {...rowProps("ruleDomain", idx)}>
             <TextArea
               value={rule.domains.join("\n")}
               onChange={(e) => updateRule(idx, { domains: linesOf(e.target.value) })}
               placeholder={"domain:.ru\ngeosite:category-ru"}
             />
           </FieldRow>
-          <FieldRow {...rowProps("ruleIp")}>
+          <FieldRow {...rowProps("ruleIp", idx)}>
             <TextArea
               value={rule.ips.join("\n")}
               onChange={(e) => updateRule(idx, { ips: linesOf(e.target.value) })}
               placeholder={"10.0.0.0/8\ngeoip:ru"}
             />
           </FieldRow>
-          <FieldRow {...rowProps("ruleOutbound")}>
+          <FieldRow {...rowProps("ruleOutbound", idx)}>
             <Select
               value={rule.outboundTag}
               onChange={(v) => updateRule(idx, { outboundTag: v })}

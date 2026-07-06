@@ -46,6 +46,22 @@ export function FieldInfoPanel({ info }: FieldInfoPanelProps) {
       <div className="text-blue">{info.label}</div>
       <p className="leading-relaxed text-fg">{info.tip}</p>
 
+      {info.options && info.options.length > 0 && (
+        <div>
+          <div className="mb-1 text-[11px] uppercase tracking-wider text-dim">
+            {info.isToggle ? "состояния" : "варианты"}
+          </div>
+          <div className="space-y-1.5">
+            {info.options.map((opt, i) => (
+              <div key={i} className="flex gap-2">
+                <span className="min-w-[11ch] shrink-0 text-green">{opt.value}</span>
+                <span className="leading-relaxed text-fg">{opt.meaning}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {!info.isToggle && info.format && (
         <div>
           <div className="text-[11px] uppercase tracking-wider text-dim">

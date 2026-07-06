@@ -14,7 +14,7 @@ export const PRIVATE_RANGES = [
 // Initial / reset state. Kept as a single source of truth so the form and the
 // reset button never drift apart.
 export const DEFAULT_STATE: ProfileState = {
-  name: "RU без VPN с AdBlock",
+  name: "Конфиг",
   dnsPrimary: "8.8.8.8",
   dnsPrimaryUrl: "https://dns.google/dns-query",
   dnsFallback: "1.1.1.1",

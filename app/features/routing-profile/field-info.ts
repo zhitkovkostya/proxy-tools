@@ -7,11 +7,23 @@ export interface FieldAlt {
   value: string;
 }
 
+// One choice of a select/checkbox field, with an explanation of what it means
+// and what it affects. Rendered as a structured sub-section in the info panel.
+export interface FieldOption {
+  value: string;
+  meaning: string;
+}
+
 export interface FieldInfo {
   label: string;
   tip: string;
   format?: string;
   isToggle?: boolean;
+  /**
+   * For select / checkbox fields: what each choice means and what it affects.
+   * Rendered above "формат ввода". For a checkbox, list the on/off states.
+   */
+  options?: FieldOption[];
   alts?: FieldAlt[];
 }
 
@@ -45,6 +57,15 @@ export type FieldKey =
   | "ruleDomain"
   | "ruleIp"
   | "ruleOutbound";
+
+// The identity of an *active row* in the form. Singular fields are identified by
+// their bare FieldKey; rule fields repeat across rules, so they are scoped with
+// their rule index (e.g. "ruleDomain#0") to stay unique per rendered row.
+export type ActiveId = FieldKey | `${FieldKey}#${number}`;
+
+// Strip the "#idx" scope (if any) back to the FieldKey used for info lookup.
+export const fieldKeyOf = (id: ActiveId): FieldKey =>
+  id.split("#")[0] as FieldKey;
 
 export const FIELD_INFO: Record<FieldKey, FieldInfo> = {
   name: {
@@ -100,7 +121,12 @@ export const FIELD_INFO: Record<FieldKey, FieldInfo> = {
   dnsType: {
     label: "Тип DNS-запроса",
     tip: "Протокол DNS-запроса.",
-    format: "DoH / DoT / UDP / TCP",
+    options: [
+      { value: "DoH", meaning: "DNS-over-HTTPS: запросы шифруются и идут по HTTPS (порт 443). Скрывает DNS от провайдера, сложнее заблокировать. Требует DoH URL." },
+      { value: "DoT", meaning: "DNS-over-TLS: запросы шифруются по TLS на отдельном порту 853. Тоже приватно, но порт легче фильтруется, чем 443." },
+      { value: "UDP", meaning: "Обычный незашифрованный DNS по UDP (порт 53). Быстро, но провайдер видит и может подменять запросы." },
+      { value: "TCP", meaning: "Незашифрованный DNS по TCP (порт 53). Как UDP, но по TCP — надёжнее при потере пакетов, чуть медленнее." },
+    ],
     alts: [
       { clients: "happ", value: "DomesticDNSType, RemoteDNSType" },
       { clients: "Streisand, v2RayTun", value: "не используется в routing-объекте" },
@@ -111,6 +137,10 @@ export const FIELD_INFO: Record<FieldKey, FieldInfo> = {
     label: "Приватные IP напрямую",
     tip: "Включает direct-маршрут для RFC1918-диапазонов (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16 и т.п.). Влияет на все четыре формата одновременно.",
     isToggle: true,
+    options: [
+      { value: "включено", meaning: "Приватные/локальные IP (роутер, NAS, устройства в LAN) идут напрямую, минуя прокси. Обычно нужно, чтобы работали локальная сеть и админки устройств." },
+      { value: "выключено", meaning: "Приватные IP не получают отдельного direct-правила и попадают под общую логику маршрутизации — доступ к локальной сети может пойти через прокси и сломаться." },
+    ],
     alts: [
       { clients: "happ", value: "добавляет диапазоны в DirectIp" },
       { clients: "Streisand, v2RayTun", value: "добавляет отдельное direct-правило с ip: [...]" },
@@ -137,32 +167,51 @@ export const FIELD_INFO: Record<FieldKey, FieldInfo> = {
   },
   domainStrategy: {
     label: "DomainStrategy",
-    tip: "Как Xray резолвит домены. AsIs — только по правилам домена. IPIfNonMatch — резолвить в IP, если домен не совпал ни с одним правилом. IPOnDemand — резолвить всегда.",
-    format: "AsIs / IPIfNonMatch / IPOnDemand",
+    tip: "Как Xray резолвит домены при сопоставлении с правилами маршрутизации.",
+    options: [
+      { value: "AsIs", meaning: "Сопоставлять только по домену, IP-правила к доменному трафику не применяются. Быстрее всего, без лишних DNS-запросов, но домен не попадёт под IP/geoip-правило." },
+      { value: "IPIfNonMatch", meaning: "Если домен не совпал ни с одним доменным правилом — резолвить его в IP и проверить IP-правила. Компромисс: лишний DNS только для несовпавших доменов." },
+      { value: "IPOnDemand", meaning: "Резолвить домен в IP сразу, как только встречается любое IP-правило. Максимально точное сопоставление по IP, но больше DNS-запросов." },
+    ],
     alts: [{ clients: "happ", value: "DomainStrategy" }],
   },
   routeOrder: {
     label: "RouteOrder",
-    tip: "Порядок применения групп правил: сначала проверяется block-список, потом direct, потом proxy — или другой порядок.",
-    format: "block-direct-proxy / block-proxy-direct",
+    tip: "Порядок, в котором проверяются группы правил. Блокировка всегда первой; отличается очередь direct и proxy.",
+    options: [
+      { value: "block-direct-proxy", meaning: "Сначала block, затем direct, затем proxy. При совпадении и с direct-, и с proxy-правилом выигрывает direct — трафик чаще идёт напрямую." },
+      { value: "block-proxy-direct", meaning: "Сначала block, затем proxy, затем direct. При двойном совпадении выигрывает proxy — трафик чаще идёт через прокси." },
+    ],
     alts: [{ clients: "happ", value: "RouteOrder" }],
   },
   globalProxy: {
     label: "GlobalProxy",
-    tip: "Весь трафик по умолчанию идёт через прокси, если не совпал ни с одним правилом (catch-all = proxy вместо direct).",
+    tip: "Что делать с трафиком, не совпавшим ни с одним правилом (поведение по умолчанию, catch-all).",
     isToggle: true,
+    options: [
+      { value: "включено", meaning: "Несовпавший трафик идёт через прокси. Режим «всё через VPN» — под прокси попадает и то, что вы не описали правилами." },
+      { value: "выключено", meaning: "Несовпавший трафик идёт напрямую. Режим «прокси только по правилам» — через прокси идёт лишь то, что явно совпало с proxy-правилом." },
+    ],
     alts: [{ clients: "happ", value: "GlobalProxy" }],
   },
   fakeDns: {
     label: "FakeDns",
-    tip: "Использовать фейковые IP для DNS-резолва вместо настоящих — ускоряет роутинг по доменам, но может конфликтовать с некоторыми приложениями.",
+    tip: "Выдавать приложениям фиктивные IP из служебного диапазона, а реальный резолв делать внутри ядра по домену.",
     isToggle: true,
+    options: [
+      { value: "включено", meaning: "Ядро отдаёт фейковый IP и маршрутизирует по домену без предварительного DNS-запроса. Быстрее и точнее доменные правила, но некоторые приложения (проверяющие IP) могут ломаться." },
+      { value: "выключено", meaning: "Обычный DNS-резолв в настоящие IP. Максимальная совместимость, но домены резолвятся заранее и роутинг по ним чуть медленнее." },
+    ],
     alts: [{ clients: "happ", value: "FakeDns" }],
   },
   useChunkFiles: {
     label: "UseChunkFiles",
-    tip: "Загружать geo-базы (.dat файлы) частями вместо целого файла — снижает пиковую память при загрузке.",
+    tip: "Как загружать geo-базы (.dat файлы): целиком или частями.",
     isToggle: true,
+    options: [
+      { value: "включено", meaning: "Грузить geo-базы частями (chunks). Ниже пиковое потребление памяти — полезно на слабых устройствах, но загрузка может быть чуть дольше." },
+      { value: "выключено", meaning: "Грузить .dat файл целиком. Быстрее, но выше пик памяти в момент загрузки." },
+    ],
     alts: [{ clients: "happ", value: "UseChunkFiles" }],
   },
   blockSites: {
@@ -186,25 +235,38 @@ export const FIELD_INFO: Record<FieldKey, FieldInfo> = {
   v2DomainStrategy: {
     label: "domainStrategy",
     tip: "Аналог DomainStrategy happ в формате routing-объекта v2RayTun. Определяет, когда домены резолвятся в IP для сопоставления с IP-правилами.",
-    format: "AsIs / IPIfNonMatch / IPOnDemand",
+    options: [
+      { value: "AsIs", meaning: "Сопоставлять только по домену, без резолва в IP. Быстрее всего, но доменный трафик не попадёт под IP/geoip-правила." },
+      { value: "IPIfNonMatch", meaning: "Резолвить в IP и проверять IP-правила только для доменов, не совпавших с доменными правилами. Разумный компромисс." },
+      { value: "IPOnDemand", meaning: "Резолвить домен в IP при первом же встреченном IP-правиле. Точнее сопоставление, но больше DNS-запросов." },
+    ],
     alts: [{ clients: "v2RayTun", value: "domainStrategy" }],
   },
   v2DomainMatcher: {
     label: "domainMatcher",
-    tip: "Алгоритм сопоставления доменов в правилах. hybrid — быстрее, расходует больше памяти. linear — медленнее, экономичнее.",
-    format: "hybrid / linear",
+    tip: "Алгоритм сопоставления доменов в правилах.",
+    options: [
+      { value: "hybrid", meaning: "Индексный алгоритм: быстрее сопоставляет домены при большом числе правил, но расходует больше памяти. Значение по умолчанию для большинства случаев." },
+      { value: "linear", meaning: "Последовательный перебор: медленнее на больших списках, зато экономнее по памяти. Имеет смысл на слабых устройствах." },
+    ],
     alts: [{ clients: "v2RayTun", value: "domainMatcher" }],
   },
   srIpv6: {
     label: "ipv6",
-    tip: "Включить поддержку IPv6 в Shadowrocket. Оставляйте false, если провайдер/сеть не имеет стабильного IPv6.",
-    format: "true / false",
+    tip: "Поддержка IPv6 в Shadowrocket.",
+    options: [
+      { value: "true", meaning: "IPv6 включён: приложения могут использовать IPv6-адреса и AAAA-записи. Нужно, только если у сети/провайдера стабильный IPv6." },
+      { value: "false", meaning: "IPv6 выключен: весь трафик идёт по IPv4. Безопасный вариант по умолчанию — исключает утечки и сбои при нестабильном IPv6." },
+    ],
     alts: [{ clients: "Shadowrocket", value: "ipv6" }],
   },
   srUdpPolicy: {
     label: "udp-policy-not-supported-behaviour",
-    tip: "Что делать с UDP-трафиком, если выбранный сервер не поддерживает UDP-форвардинг. REJECT — отбросить пакет, DIRECT — пустить напрямую.",
-    format: "REJECT / DIRECT",
+    tip: "Что делать с UDP-трафиком, если выбранный сервер не поддерживает UDP-форвардинг.",
+    options: [
+      { value: "REJECT", meaning: "Отбросить UDP-пакет. Приложение не получит UDP через прокси — надёжнее с точки зрения приватности (нет утечки в обход туннеля), но часть UDP-сервисов не заработает." },
+      { value: "DIRECT", meaning: "Пустить UDP напрямую, минуя прокси. UDP-сервисы работают, но их трафик идёт с вашего реального IP — это утечка в обход прокси." },
+    ],
     alts: [{ clients: "Shadowrocket", value: "udp-policy-not-supported-behaviour" }],
   },
   srTunExcluded: {
@@ -258,7 +320,11 @@ export const FIELD_INFO: Record<FieldKey, FieldInfo> = {
   ruleOutbound: {
     label: "outboundTag",
     tip: "Куда направлять трафик, совпавший с правилом.",
-    format: "direct / proxy / block",
+    options: [
+      { value: "direct", meaning: "Пустить напрямую, минуя прокси. Для доверенного трафика (локальные/отечественные ресурсы), которому прокси не нужен." },
+      { value: "proxy", meaning: "Направить через выбранный прокси-сервер. Основной сценарий обхода блокировок." },
+      { value: "block", meaning: "Заблокировать: соединение обрывается. Для рекламы, трекеров, нежелательных доменов." },
+    ],
     alts: [
       { clients: "happ, Streisand, v2RayTun", value: "outboundTag" },
       { clients: "Shadowrocket", value: "DIRECT / PROXY / REJECT" },

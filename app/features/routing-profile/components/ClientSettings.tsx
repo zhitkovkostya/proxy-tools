@@ -1,7 +1,7 @@
 import { Plus, X } from "lucide-react";
 import { Card } from "~/components/ui/Card";
 import { Select, Switch, TextArea, TextInput } from "~/components/ui/inputs";
-import type { FieldKey } from "../field-info";
+import type { ActiveId, FieldKey } from "../field-info";
 import {
   DOMAIN_MATCHER_OPTIONS,
   DOMAIN_STRATEGY_OPTIONS,
@@ -14,11 +14,11 @@ import { FieldRow } from "./FieldLabel";
 
 interface SectionProps {
   store: ProfileStore;
-  activeKey: FieldKey | null;
-  onActivate: (key: FieldKey) => void;
+  activeKey: ActiveId | null;
+  onActivate: (id: ActiveId) => void;
 }
 
-function useRowProps(activeKey: FieldKey | null, onActivate: (key: FieldKey) => void) {
+function useRowProps(activeKey: ActiveId | null, onActivate: (id: ActiveId) => void) {
   return (key: FieldKey) => ({
     fieldKey: key,
     active: activeKey === key,
