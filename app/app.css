@@ -1,15 +1,48 @@
 @import "tailwindcss";
 
+/* ---- палитра: gruvbox dark (тёплый терминал, не неон) ----
+   Токены доступны как Tailwind-утилиты: bg-bg, text-fg, ring-border, text-blue … */
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, "Cascadia Code",
+    Menlo, Consolas, monospace;
+
+  --color-bg: #1d2021;
+  --color-pane: #282828;
+  --color-pane2: #32302f;
+  --color-border: #504945;
+  --color-border-hi: #7c6f64;
+  --color-fg: #ebdbb2;
+  --color-dim: #928374;
+  --color-blue: #83a598; /* заголовки, кейбинды  */
+  --color-aqua: #8ec07c; /* json-ключи           */
+  --color-yellow: #fabd2f; /* select-скобки        */
+  --color-green: #b8bb26; /* строки, toggle on    */
+  --color-orange: #fe8019; /* маркер, числа        */
+  --color-red: #fb4934; /* block                */
+  --color-purple: #d3869b;
+  --color-sel: #3c3836; /* активная строка      */
 }
 
 html,
 body {
-  @apply bg-white dark:bg-gray-950;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  color-scheme: dark;
+}
 
-  @media (prefers-color-scheme: dark) {
-    color-scheme: dark;
-  }
+body {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* тонкие скроллбары в терминальном духе */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
 }

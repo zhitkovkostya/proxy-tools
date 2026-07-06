@@ -3,14 +3,13 @@ import type { ClientId } from "./types";
 export interface ClientTab {
   id: ClientId;
   name: string;
-  scheme: string;
 }
 
 export const CLIENT_TABS: ClientTab[] = [
-  { id: "happ", name: "happ", scheme: "happ://routing/add/…" },
-  { id: "streisand", name: "Streisand", scheme: "streisand://import/route://…" },
-  { id: "v2raytun", name: "v2RayTun", scheme: "v2raytun://import_route/…" },
-  { id: "shadowrocket", name: "Shadowrocket", scheme: ".conf файл" },
+  { id: "happ", name: "happ" },
+  { id: "streisand", name: "Streisand" },
+  { id: "v2raytun", name: "v2RayTun" },
+  { id: "shadowrocket", name: "Shadowrocket" },
 ];
 
 // Three context bullets shown per client, swapped when the active tab changes.

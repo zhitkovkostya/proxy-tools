@@ -1,18 +1,19 @@
 import { Plus, Trash2 } from "lucide-react";
 import { Select, TextArea } from "~/components/ui/inputs";
 import { linesOf } from "~/lib/encoding";
-import type { FieldInfo } from "../field-info";
+import type { FieldKey } from "../field-info";
 import { OUTBOUND_OPTIONS } from "../options";
 import type { Rule } from "../types";
-import { FieldLabel } from "./FieldLabel";
+import { FieldRow } from "./FieldLabel";
 
 export interface RuleEditorProps {
   rules: Rule[];
   onChange: (updater: (prev: Rule[]) => Rule[]) => void;
-  onInfo: (info: FieldInfo) => void;
+  activeKey: FieldKey | null;
+  onActivate: (key: FieldKey) => void;
 }
 
-export function RuleEditor({ rules, onChange, onInfo }: RuleEditorProps) {
+export function RuleEditor({ rules, onChange, activeKey, onActivate }: RuleEditorProps) {
   const updateRule = (idx: number, patch: Partial<Rule>) =>
     onChange((rs) => rs.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
   const removeRule = (idx: number) =>
@@ -23,55 +24,57 @@ export function RuleEditor({ rules, onChange, onInfo }: RuleEditorProps) {
       { name: "New rule", domains: [], ips: [], outboundTag: "proxy" },
     ]);
 
+  const rowProps = (key: FieldKey) => ({
+    fieldKey: key,
+    active: activeKey === key,
+    onActivate,
+  });
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-1">
       {rules.map((rule, idx) => (
-        <div key={idx} className="rounded-2xl bg-stone-50 p-3.5 ring-1 ring-stone-200">
-          <div className="mb-3 flex items-center justify-between gap-2">
+        <div key={idx} className="mb-2 rounded-sm border border-border px-2 py-1.5">
+          <div className="mb-1 flex items-center justify-between gap-2 px-2">
             <input
               type="text"
               value={rule.name}
+              spellCheck={false}
               onChange={(e) => updateRule(idx, { name: e.target.value })}
-              className="w-2/3 bg-transparent text-sm font-semibold text-stone-800 outline-none"
+              className="w-2/3 border-0 bg-transparent p-0 text-green outline-none [caret-color:var(--color-orange)]"
             />
             <button
               onClick={() => removeRule(idx)}
-              className="flex items-center gap-1 rounded-full px-2 py-1 text-[11px] text-stone-400 hover:bg-red-50 hover:text-red-600"
+              className="flex items-center gap-1 text-dim outline-none hover:text-red"
             >
               <Trash2 size={12} /> удалить
             </button>
           </div>
-          <div className="space-y-3">
-            <div>
-              <FieldLabel fieldKey="ruleDomain" onInfo={onInfo} />
-              <TextArea
-                value={rule.domains.join("\n")}
-                onChange={(e) => updateRule(idx, { domains: linesOf(e.target.value) })}
-                placeholder={"domain:.ru\ngeosite:category-ru"}
-              />
-            </div>
-            <div>
-              <FieldLabel fieldKey="ruleIp" onInfo={onInfo} />
-              <TextArea
-                value={rule.ips.join("\n")}
-                onChange={(e) => updateRule(idx, { ips: linesOf(e.target.value) })}
-                placeholder={"10.0.0.0/8\ngeoip:ru"}
-              />
-            </div>
-            <div>
-              <FieldLabel fieldKey="ruleOutbound" onInfo={onInfo} />
-              <Select
-                value={rule.outboundTag}
-                onChange={(v) => updateRule(idx, { outboundTag: v })}
-                options={OUTBOUND_OPTIONS}
-              />
-            </div>
-          </div>
+          <FieldRow {...rowProps("ruleDomain")}>
+            <TextArea
+              value={rule.domains.join("\n")}
+              onChange={(e) => updateRule(idx, { domains: linesOf(e.target.value) })}
+              placeholder={"domain:.ru\ngeosite:category-ru"}
+            />
+          </FieldRow>
+          <FieldRow {...rowProps("ruleIp")}>
+            <TextArea
+              value={rule.ips.join("\n")}
+              onChange={(e) => updateRule(idx, { ips: linesOf(e.target.value) })}
+              placeholder={"10.0.0.0/8\ngeoip:ru"}
+            />
+          </FieldRow>
+          <FieldRow {...rowProps("ruleOutbound")}>
+            <Select
+              value={rule.outboundTag}
+              onChange={(v) => updateRule(idx, { outboundTag: v })}
+              options={OUTBOUND_OPTIONS}
+            />
+          </FieldRow>
         </div>
       ))}
       <button
         onClick={addRule}
-        className="flex w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-stone-300 py-2.5 text-xs font-medium text-stone-500 hover:border-orange-400 hover:text-orange-600"
+        className="flex w-full items-center justify-center gap-1.5 rounded-sm border border-dashed border-border py-1.5 text-dim outline-none hover:border-yellow hover:text-yellow"
       >
         <Plus size={13} /> добавить правило
       </button>

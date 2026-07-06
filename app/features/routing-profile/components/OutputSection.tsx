@@ -1,47 +1,51 @@
 import { Download } from "lucide-react";
-import { Card } from "~/components/ui/Card";
 import { CopyButton, SecondaryButton } from "~/components/ui/buttons";
 import { downloadTextFile, sanitizeFilename } from "~/lib/download";
 import type { GeneratedOutput } from "../types";
 
-export function OutputSection({ output }: { output: GeneratedOutput }) {
+// Renders the generated profile inside the right-hand "output" pane. When
+// `singleLine` is set (deeplink/uri view) the payload is collapsed to a single
+// line with an ellipsis — the base64 blob isn't worth reading, and it frees up
+// vertical space.
+export function OutputSection({
+  output,
+  singleLine,
+}: {
+  output: GeneratedOutput;
+  singleLine?: boolean;
+}) {
   const downloadConf = () => {
     if (output.kind !== "conf") return;
     downloadTextFile(output.text, `${sanitizeFilename(output.confName, "shadowrocket")}.conf`);
   };
 
   return (
-    <div className="space-y-4">
-      {output.kind === "deeplink" && (
-        <Card title="deep link">
-          <div className="break-all rounded-2xl bg-stone-900 px-4 py-3 font-mono text-[11px] leading-relaxed text-orange-300">
-            {output.deepLink}
-          </div>
-          <CopyButton text={output.deepLink} label="ссылку" />
-        </Card>
-      )}
-
+    <div className="space-y-3">
       {output.kind === "conf" && (
-        <Card title=".conf файл">
+        <>
           <SecondaryButton
             onClick={downloadConf}
             className="flex w-full items-center justify-center gap-2"
           >
             <Download size={14} /> скачать .conf
           </SecondaryButton>
-          <div className="rounded-2xl bg-orange-50 px-4 py-3 text-[11px] leading-relaxed text-orange-900 ring-1 ring-orange-200">
+          <p className="leading-relaxed text-dim">
             После скачивания откройте файл в Файлах (или в шторке загрузок Safari),
             нажмите «Поделиться» → «Shadowrocket» — конфиг подхватится как локальный.
-          </div>
-        </Card>
+          </p>
+        </>
       )}
 
-      <Card title={output.kind === "conf" ? ".conf (превью)" : "JSON"}>
-        <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-2xl bg-stone-900 px-4 py-3 font-mono text-[11px] leading-relaxed text-stone-200">
+      {singleLine ? (
+        <div className="overflow-hidden text-ellipsis whitespace-nowrap text-fg">
+          {output.text}
+        </div>
+      ) : (
+        <pre className="max-h-[52vh] overflow-auto whitespace-pre-wrap break-all text-fg">
           {output.text}
         </pre>
-        <CopyButton text={output.text} label={output.copyLabel} />
-      </Card>
+      )}
+      <CopyButton text={output.text} label={output.copyLabel} />
     </div>
   );
 }

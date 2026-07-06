@@ -7,32 +7,22 @@ export interface CardProps {
   children: ReactNode;
 }
 
+// Terminal "pane": a thin bordered box with its title notched into the top
+// border (absolutely positioned, painted over the border on the pane bg).
 export function Card({ title, badge, accent, children }: CardProps) {
   return (
     <div
-      className={`mb-4 overflow-hidden rounded-3xl bg-white ring-1 ${
-        accent ? "ring-orange-300" : "ring-stone-200"
+      className={`relative mb-5 rounded-sm border bg-pane px-3 pb-3 pt-3.5 ${
+        accent ? "border-border-hi" : "border-border"
       }`}
     >
       {title && (
-        <div className="flex items-center justify-between px-5 pt-4 pb-2">
-          <div className="flex items-center gap-2">
-            <h2
-              className={`text-[11px] font-semibold uppercase tracking-wide ${
-                accent ? "text-orange-600" : "text-stone-400"
-              }`}
-            >
-              {title}
-            </h2>
-            {badge && (
-              <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[9px] font-medium text-orange-700">
-                {badge}
-              </span>
-            )}
-          </div>
+        <div className="absolute -top-[0.72em] left-3 flex items-center gap-2 bg-pane px-1.5 text-xs">
+          <span className={accent ? "text-yellow" : "text-blue"}>{title}</span>
+          {badge && <span className="text-dim">· {badge}</span>}
         </div>
       )}
-      <div className="px-5 pb-5 pt-2 space-y-4">{children}</div>
+      <div className="space-y-1">{children}</div>
     </div>
   );
 }

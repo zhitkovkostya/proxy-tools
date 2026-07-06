@@ -1,29 +1,42 @@
 import type { ReactNode } from "react";
-import { Info } from "lucide-react";
-import { FIELD_INFO, type FieldInfo, type FieldKey } from "../field-info";
+import { FIELD_INFO, type FieldKey } from "../field-info";
 
-export interface FieldLabelProps {
+export interface FieldRowProps {
   fieldKey: FieldKey;
-  onInfo: (info: FieldInfo) => void;
+  active: boolean;
+  onActivate: (key: FieldKey) => void;
+  /** Override the label text (defaults to FIELD_INFO[fieldKey].label). */
+  label?: ReactNode;
+  /** The field control (input / select / switch / textarea …). */
   children?: ReactNode;
 }
 
-// Label + ⓘ button that opens the info drawer for a given field.
-export function FieldLabel({ fieldKey, onInfo, children }: FieldLabelProps) {
+// One form row in the terminal grid: `[mark] label   value`. Activating the row
+// (focus / click) surfaces this field's help in the info panel — there is no ⓘ
+// button anymore. Focus is captured so tabbing into the inner control also
+// activates the row. Hover intentionally does NOT activate.
+export function FieldRow({ fieldKey, active, onActivate, label, children }: FieldRowProps) {
   const info = FIELD_INFO[fieldKey];
+  const activate = () => onActivate(fieldKey);
   return (
-    <div className="mb-1.5 flex items-center gap-1.5">
-      <span className="text-xs font-medium text-stone-500">
-        {children ?? info.label}
-      </span>
-      <button
-        type="button"
-        onClick={() => onInfo(info)}
-        className="flex h-4 w-4 items-center justify-center rounded-full text-stone-400 hover:bg-stone-200 hover:text-orange-600"
-        aria-label={`Информация: ${info.label}`}
+    <div
+      className={`row relative grid grid-cols-[15ch_1fr] items-start gap-2 rounded-sm px-2 py-0.5 overflow-hidden ${
+        active ? "bg-sel" : ""
+      }`}
+      data-key={fieldKey}
+      onFocusCapture={activate}
+      onClick={activate}
+    >
+      <span
+        className={`mark absolute left-[-2px] text-orange ${active ? "opacity-100" : "opacity-0"}`}
+        aria-hidden
       >
-        <Info size={11} />
-      </button>
+        ▌
+      </span>
+      <span className={`truncate ${active ? "text-fg" : "text-dim"}`}>
+        {label ?? info.label}
+      </span>
+      <span className="min-w-0">{children}</span>
     </div>
   );
 }

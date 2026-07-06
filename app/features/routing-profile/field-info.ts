@@ -119,7 +119,7 @@ export const FIELD_INFO: Record<FieldKey, FieldInfo> = {
   },
   geoipUrl: {
     label: "GeoipUrl",
-    tip: "URL .dat файла geoip-базы для Xray-ядра. Streisand, v2RayTun и Shadowrocket это поле не используют — хранится здесь для единообразия.",
+    tip: "URL .dat файла geoip-базы для Xray-ядра.",
     format: "прямая ссылка на .dat файл",
     alts: [
       { clients: "happ", value: "GeoipUrl" },
@@ -128,7 +128,7 @@ export const FIELD_INFO: Record<FieldKey, FieldInfo> = {
   },
   geositeUrl: {
     label: "GeositeUrl",
-    tip: "URL .dat файла geosite-базы для Xray-ядра. Streisand, v2RayTun и Shadowrocket это поле не используют — хранится здесь для единообразия.",
+    tip: "URL .dat файла geosite-базы для Xray-ядра.",
     format: "прямая ссылка на .dat файл",
     alts: [
       { clients: "happ", value: "GeositeUrl" },

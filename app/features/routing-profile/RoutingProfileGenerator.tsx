@@ -1,80 +1,156 @@
-import { useState } from "react";
+import { RotateCcw } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
 import { Tabs } from "~/components/ui/Tabs";
-import { PrimaryButton, SecondaryButton } from "~/components/ui/buttons";
+import { SecondaryButton, copyText } from "~/components/ui/buttons";
 import { generateOutput } from "./builders";
-import { CLIENT_ALERTS, CLIENT_TABS } from "./clients";
+import { CLIENT_TABS } from "./clients";
 import { ClientSettings } from "./components/ClientSettings";
-import { InfoDrawer } from "./components/InfoDrawer";
+import { FieldInfoPanel } from "./components/FieldInfoPanel";
 import { OutputSection } from "./components/OutputSection";
 import { RulesSection, SharedSection } from "./components/SharedSection";
-import type { FieldInfo } from "./field-info";
-import type { ClientId, GeneratedOutput } from "./types";
+import { FIELD_INFO, type FieldKey } from "./field-info";
+import type { ClientId } from "./types";
 import { useProfileState } from "./useProfileState";
+import { useTuiKeyboard } from "./useTuiKeyboard";
+
+// uri  → the ready-to-import deeplink (or the .conf text for Shadowrocket)
+// json → the underlying JSON / plist-preview text
+type OutFmt = "uri" | "json";
 
 export function RoutingProfileGenerator() {
   const store = useProfileState();
   const [activeClient, setActiveClient] = useState<ClientId>("happ");
-  const [drawerInfo, setDrawerInfo] = useState<FieldInfo | null>(null);
-  const [output, setOutput] = useState<GeneratedOutput | null>(null);
+  const [activeKey, setActiveKey] = useState<FieldKey | null>(null);
+  const [fmt, setFmt] = useState<OutFmt>("uri");
+  const rowsRef = useRef<HTMLDivElement>(null);
 
-  const selectClient = (id: ClientId) => {
-    setActiveClient(id);
-    setOutput(null); // output is client-specific; clear on switch
-  };
+  const selectClient = (id: ClientId) => setActiveClient(id);
 
-  const generate = () => setOutput(generateOutput(activeClient, store.state));
-  const reset = () => {
-    store.reset();
-    setOutput(null);
-  };
+  // Live output: recompute on every state change so the right pane never empties.
+  const output = useMemo(
+    () => generateOutput(activeClient, store.state),
+    [activeClient, store.state],
+  );
+
+  // For deeplink clients, `uri` shows the ready deeplink and `json` shows the
+  // underlying payload text; Shadowrocket has only the .conf text (toggle hidden).
+  const shownText =
+    output.kind === "deeplink" && fmt === "uri" ? output.deepLink : output.text;
+  const shownOutput = { ...output, text: shownText };
+
+  const copyCurrent = () => void copyText(shownText);
+  const toggleFmt = () => setFmt((f) => (f === "uri" ? "json" : "uri"));
+
+  // Keyboard navigation (↑↓ ←→ enter, c/f) ported from the mock.
+  useTuiKeyboard({
+    containerRef: rowsRef,
+    activeKey,
+    setActiveKey,
+    onCopy: copyCurrent,
+    onToggleFormat: toggleFmt,
+  });
+
+  const info = activeKey ? FIELD_INFO[activeKey] : null;
+  const canToggleFmt = output.kind === "deeplink";
 
   return (
-    <div className="min-h-screen bg-stone-100 px-4 py-6 font-sans text-stone-800">
-      <div className="mx-auto max-w-xl">
-        <header className="mb-5">
-          <h1 className="text-lg font-bold tracking-tight text-stone-900">
-            routing profile generator
-          </h1>
-          <p className="text-xs text-stone-500">
-            happ · streisand · v2raytun · shadowrocket (iOS)
-          </p>
-        </header>
+    <div className="flex h-screen flex-col p-5">
+      <div className="relative mx-auto flex min-h-0 w-full max-w-[1120px] flex-col rounded-sm border border-border-hi px-4 pb-2.5 pt-4">
+        <div className="absolute -top-[0.72em] left-4 bg-bg px-2 text-blue">
+          proxy-config <span className="text-dim">·</span>{" "}
+          <span className="text-fg">{activeClient}</span>
+        </div>
 
-        <Tabs tabs={CLIENT_TABS} active={activeClient} onChange={selectClient} />
+        <div className="mb-3 mt-1 shrink-0">
+          <Tabs tabs={CLIENT_TABS} active={activeClient} onChange={selectClient} />
+        </div>
 
-        <div className="mb-4 rounded-2xl bg-amber-50 px-4 py-3 ring-1 ring-amber-200">
-          <ul className="space-y-1">
-            {CLIENT_ALERTS[activeClient].map((line, i) => (
-              <li
-                key={i}
-                className="flex gap-2 text-xs leading-relaxed text-amber-900"
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-5 lg:grid-cols-[1.05fr_1fr]">
+          {/* ── форма ── */}
+          <section
+            ref={rowsRef}
+            className="min-h-0 overflow-auto pr-1 pt-1"
+          >
+            <SharedSection store={store} activeKey={activeKey} onActivate={setActiveKey} />
+            <RulesSection store={store} activeKey={activeKey} onActivate={setActiveKey} />
+            <ClientSettings
+              client={activeClient}
+              store={store}
+              activeKey={activeKey}
+              onActivate={setActiveKey}
+            />
+            <div className="px-2 pb-2">
+              <SecondaryButton
+                onClick={store.reset}
+                className="flex w-full items-center justify-center gap-2"
               >
-                <span className="mt-0.5 shrink-0 text-amber-400">•</span>
-                <span>{line}</span>
-              </li>
-            ))}
-          </ul>
+                <RotateCcw size={13} /> сбросить все поля
+              </SecondaryButton>
+            </div>
+          </section>
+
+          {/* ── вывод + info ── */}
+          <section className="flex min-h-0 flex-col gap-5 overflow-auto pt-1">
+            <div className="relative shrink-0 rounded-sm border border-border bg-pane px-3 pb-3 pt-3.5 pt-1">
+              <div className="absolute -top-[0.72em] left-3 bg-pane px-1.5 text-blue text-xs">
+                output
+              </div>
+              {canToggleFmt && (
+                <div className="absolute -top-[0.72em] right-3 bg-pane px-1.5 text-xs">
+                  <button
+                    onClick={() => setFmt("uri")}
+                    className={fmt === "uri" ? "text-yellow" : "text-dim"}
+                  >
+                    uri
+                  </button>
+                  <span className="text-border-hi"> / </span>
+                  <button
+                    onClick={() => setFmt("json")}
+                    className={fmt === "json" ? "text-yellow" : "text-dim"}
+                  >
+                    json
+                  </button>
+                </div>
+              )}
+              <OutputSection output={shownOutput} singleLine={canToggleFmt && fmt === "uri"} />
+            </div>
+
+            <div className="relative shrink-0 rounded-sm border border-border bg-pane px-3 pb-3 pt-3.5">
+              <div className="absolute -top-[0.72em] left-3 bg-pane px-1.5 text-blue text-xs">
+                info
+              </div>
+              <FieldInfoPanel info={info} />
+            </div>
+          </section>
         </div>
 
-        <SharedSection store={store} onInfo={setDrawerInfo} />
-        <RulesSection store={store} onInfo={setDrawerInfo} />
-        <ClientSettings client={activeClient} store={store} onInfo={setDrawerInfo} />
-
-        <div className="mb-5 flex gap-2.5">
-          <PrimaryButton onClick={generate}>сгенерировать профиль</PrimaryButton>
-          <SecondaryButton onClick={reset}>сброс</SecondaryButton>
-        </div>
-
-        {output && <OutputSection output={output} />}
-
-        <footer className="mt-4 pb-2" />
+        <StatusBar />
       </div>
+    </div>
+  );
+}
 
-      <InfoDrawer
-        open={!!drawerInfo}
-        onClose={() => setDrawerInfo(null)}
-        info={drawerInfo}
-      />
+function StatusBar() {
+  return (
+    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-border pt-2 text-dim">
+      <span>
+        <span className="text-blue">↑↓</span> строка
+      </span>
+      <span>
+        <span className="text-blue">←→</span> сменить
+      </span>
+      <span>
+        <span className="text-yellow">⏎</span> дальше
+      </span>
+      <span>
+        <span className="text-yellow">esc</span> из поля
+      </span>
+      <span>
+        <span className="text-yellow">c</span> копировать
+      </span>
+      <span>
+        <span className="text-yellow">f</span> формат
+      </span>
     </div>
   );
 }

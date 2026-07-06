@@ -6,7 +6,7 @@ export function PrimaryButton(props: ComponentPropsWithoutRef<"button">) {
   return (
     <button
       {...props}
-      className="flex-1 rounded-2xl bg-stone-900 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-stone-800 active:bg-stone-950"
+      className="rounded-sm border border-border-hi bg-pane2 px-3 py-1.5 text-fg outline-none transition-colors hover:border-yellow hover:text-yellow"
     />
   );
 }
@@ -18,13 +18,13 @@ export function SecondaryButton({
   return (
     <button
       {...props}
-      className={`rounded-2xl bg-stone-100 px-4 py-3 text-sm font-medium text-stone-600 ring-1 ring-stone-200 transition-colors hover:bg-stone-200 hover:text-stone-800 ${className}`}
+      className={`rounded-sm border border-border bg-transparent px-3 py-1.5 text-dim outline-none transition-colors hover:border-border-hi hover:text-fg ${className}`}
     />
   );
 }
 
 // Copies text to the clipboard with a graceful fallback for insecure contexts.
-async function copyText(text: string): Promise<void> {
+export async function copyText(text: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(text);
     return;
@@ -51,8 +51,8 @@ export function CopyButton({ text, label }: { text: string; label: ReactNode }) 
       onClick={doCopy}
       className="flex w-full items-center justify-center gap-2"
     >
-      {copied ? <Check size={14} className="text-orange-600" /> : <Copy size={14} />}
-      {copied ? "Скопировано" : <>Скопировать {label}</>}
+      {copied ? <Check size={14} className="text-green" /> : <Copy size={14} />}
+      {copied ? "скопировано" : <>копировать {label}</>}
     </SecondaryButton>
   );
 }
