@@ -65,10 +65,15 @@ function HappSettings({ store, activeKey, onActivate }: SectionProps) {
           <TextArea
             value={state.blockSites}
             onChange={(e) => set("blockSites", e.target.value)}
+            placeholder={"geosite:category-ads-all\ndomain:.doubleclick.net\nexample.com"}
           />
         </FieldRow>
         <FieldRow {...rowProps("blockIp")}>
-          <TextArea value={state.blockIp} onChange={(e) => set("blockIp", e.target.value)} />
+          <TextArea
+            value={state.blockIp}
+            onChange={(e) => set("blockIp", e.target.value)}
+            placeholder={"geoip:private\n10.0.0.0/8\n192.168.0.0/16"}
+          />
         </FieldRow>
         <FieldRow {...rowProps("dnsHosts")}>
           <div className="space-y-1">
@@ -160,12 +165,14 @@ function ShadowrocketSettings({ store, activeKey, onActivate }: SectionProps) {
           <TextArea
             value={state.srTunExcluded}
             onChange={(e) => set("srTunExcluded", e.target.value)}
+            placeholder="10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 224.0.0.0/4"
           />
         </FieldRow>
         <FieldRow {...rowProps("srSkipProxy")}>
           <TextInput
             value={state.srSkipProxy}
             onChange={(e) => set("srSkipProxy", e.target.value)}
+            placeholder="localhost, *.local, 192.168.0.0/16, captive.apple.com"
           />
         </FieldRow>
         <FieldRow {...rowProps("srUpdateUrl")}>
@@ -182,12 +189,14 @@ function ShadowrocketSettings({ store, activeKey, onActivate }: SectionProps) {
           <TextInput
             value={state.srAutoExclude}
             onChange={(e) => set("srAutoExclude", e.target.value)}
+            placeholder="(?i)(инфо|expire|трафик|traffic)"
           />
         </FieldRow>
         <FieldRow {...rowProps("srExtraGroups")}>
           <TextArea
             value={state.srExtraGroups}
             onChange={(e) => set("srExtraGroups", e.target.value)}
+            placeholder={"🇩🇪 Германия=(?i)(DE|Germany|Германия)\n🇳🇱 Нидерланды=(?i)(NL|Netherlands)"}
           />
         </FieldRow>
       </Card>

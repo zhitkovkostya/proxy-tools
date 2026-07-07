@@ -22,6 +22,7 @@ const SubLabel = ({ children }: { children: string }) => (
 // never reset when switching clients.
 export function SharedSection({ store, activeKey, onActivate }: SectionProps) {
   const { state, set } = store;
+  const dohOrDot = state.dnsType === "DoH" || state.dnsType === "DoT";
   const rowProps = (key: FieldKey) => ({
     fieldKey: key,
     active: activeKey === key,
@@ -30,39 +31,47 @@ export function SharedSection({ store, activeKey, onActivate }: SectionProps) {
   return (
     <Card title="config: общее" badge="не сбрасывается" accent>
       <FieldRow {...rowProps("name")}>
-        <TextInput value={state.name} onChange={(e) => set("name", e.target.value)} />
+        <TextInput
+          value={state.name}
+          onChange={(e) => set("name", e.target.value)}
+          placeholder="Мой профиль"
+        />
       </FieldRow>
 
       <SubLabel>DNS</SubLabel>
+      <FieldRow {...rowProps("dnsType")}>
+        <Select
+          value={state.dnsType}
+          onChange={(v) => set("dnsType", v)}
+          options={DNS_TYPE_OPTIONS}
+        />
+      </FieldRow>
       <FieldRow {...rowProps("dnsPrimary")}>
         <TextInput
           value={state.dnsPrimary}
           onChange={(e) => set("dnsPrimary", e.target.value)}
+          placeholder="8.8.8.8"
         />
       </FieldRow>
-      <FieldRow {...rowProps("dnsPrimaryUrl")}>
+      <FieldRow {...rowProps("dnsPrimaryUrl")} disabled={!dohOrDot}>
         <TextInput
           value={state.dnsPrimaryUrl}
           onChange={(e) => set("dnsPrimaryUrl", e.target.value)}
+          placeholder="https://dns.google/dns-query"
         />
       </FieldRow>
       <FieldRow {...rowProps("dnsFallback")}>
         <TextInput
           value={state.dnsFallback}
           onChange={(e) => set("dnsFallback", e.target.value)}
+          placeholder="1.1.1.1"
         />
       </FieldRow>
-      <FieldRow {...rowProps("dnsFallbackUrl")}>
+      <FieldRow {...rowProps("dnsFallbackUrl")} disabled={!dohOrDot}>
         <TextInput
           value={state.dnsFallbackUrl}
           onChange={(e) => set("dnsFallbackUrl", e.target.value)}
-        />
-      </FieldRow>
-      <FieldRow {...rowProps("dnsType")}>
-        <Select
-          value={state.dnsType}
-          onChange={(v) => set("dnsType", v)}
-          options={DNS_TYPE_OPTIONS}
+          placeholder="https://cloudflare-dns.com/dns-query"
         />
       </FieldRow>
 
@@ -76,12 +85,17 @@ export function SharedSection({ store, activeKey, onActivate }: SectionProps) {
 
       <SubLabel>гео-источники</SubLabel>
       <FieldRow {...rowProps("geoipUrl")}>
-        <TextInput value={state.geoipUrl} onChange={(e) => set("geoipUrl", e.target.value)} />
+        <TextInput
+          value={state.geoipUrl}
+          onChange={(e) => set("geoipUrl", e.target.value)}
+          placeholder="https://github.com/v2fly/geoip/releases/latest/download/geoip.dat"
+        />
       </FieldRow>
       <FieldRow {...rowProps("geositeUrl")}>
         <TextInput
           value={state.geositeUrl}
           onChange={(e) => set("geositeUrl", e.target.value)}
+          placeholder="https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat"
         />
       </FieldRow>
     </Card>

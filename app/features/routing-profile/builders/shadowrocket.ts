@@ -63,9 +63,10 @@ export function buildShadowrocketConf(state: ProfileState): string {
   lines.push("dns-direct-system = false");
   lines.push("dns-fallback-system = false");
   lines.push("dns-direct-fallback-proxy = true");
-  lines.push(`dns-server = ${dnsList(state.dnsPrimaryUrl, state.dnsPrimary)}`);
+  const dohOrDot = state.dnsType === "DoH" || state.dnsType === "DoT";
+  lines.push(`dns-server = ${dnsList(dohOrDot ? state.dnsPrimaryUrl : "", state.dnsPrimary)}`);
   lines.push(
-    `fallback-dns-server = ${dnsList(state.dnsFallbackUrl, state.dnsFallback, ["system"])}`,
+    `fallback-dns-server = ${dnsList(dohOrDot ? state.dnsFallbackUrl : "", state.dnsFallback, ["system"])}`,
   );
   lines.push("hijack-dns = :53");
   lines.push(`skip-proxy = ${buildSkipProxy(state)}`);

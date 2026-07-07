@@ -15,15 +15,17 @@ export interface FieldRowProps {
   label?: ReactNode;
   /** The field control (input / select / switch / textarea …). */
   children?: ReactNode;
+  /** Dims the row and makes it non-interactive. */
+  disabled?: boolean;
 }
 
 // One form row in the terminal grid: `[mark] label   value`. Activating the row
 // (focus / click) surfaces this field's help in the info panel — there is no ⓘ
 // button anymore. Focus is captured so tabbing into the inner control also
 // activates the row. Hover intentionally does NOT activate.
-export function FieldRow({ fieldKey, id = fieldKey, active, onActivate, label, children }: FieldRowProps) {
+export function FieldRow({ fieldKey, id = fieldKey, active, onActivate, label, children, disabled }: FieldRowProps) {
   const info = FIELD_INFO[fieldKey];
-  const activate = () => onActivate(id);
+  const activate = () => { if (!disabled) onActivate(id); };
   return (
     <div
       className={`row relative grid grid-cols-[15ch_1fr] items-start gap-2 rounded-sm px-2 py-0.5 overflow-hidden ${
@@ -42,7 +44,7 @@ export function FieldRow({ fieldKey, id = fieldKey, active, onActivate, label, c
       <span className={`truncate ${active ? "text-fg" : "text-dim"}`}>
         {label ?? info.label}
       </span>
-      <span className="min-w-0">{children}</span>
+      <span className={`min-w-0 ${disabled ? "pointer-events-none opacity-35" : ""}`}>{children}</span>
     </div>
   );
 }

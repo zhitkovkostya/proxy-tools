@@ -16,6 +16,13 @@ export interface FieldOption {
 
 export interface FieldInfo {
   label: string;
+  /**
+   * Field description. Plain text, with optional inline glossary terms written
+   * as `[[термин|объяснение]]`. Such terms render with a dimmed dashed underline
+   * and reveal `объяснение` in a tooltip on hover/focus. Use `[[термин]]` to look
+   * the explanation up in the shared glossary (see GLOSSARY below), or the
+   * `[[термин|...]]` form to give an inline one.
+   */
   tip: string;
   format?: string;
   isToggle?: boolean;
@@ -70,7 +77,7 @@ export const fieldKeyOf = (id: ActiveId): FieldKey =>
 export const FIELD_INFO: Record<FieldKey, FieldInfo> = {
   name: {
     label: "Name",
-    tip: "Название профиля. Попадает во все четыре формата одновременно — каждый клиент берёт это значение в своё поле имени.",
+    tip: "Название профиля.",
     format: "произвольный текст",
     alts: [
       { clients: "happ", value: "Name" },
@@ -80,7 +87,7 @@ export const FIELD_INFO: Record<FieldKey, FieldInfo> = {
   },
   dnsPrimary: {
     label: "Основной DNS",
-    tip: "DNS-сервер для обычных (внутренних/локальных) запросов.",
+    tip: "[[DNS-сервер]] для локальных (Domestic) запросов — доменов, идущих напрямую (direct). В Shadowrocket работает иначе: основной DNS для всего трафика, перезаписывает системный.",
     format: "IP-адрес, напр. 8.8.8.8",
     alts: [
       { clients: "happ", value: "DomesticDNSIp" },
@@ -90,7 +97,7 @@ export const FIELD_INFO: Record<FieldKey, FieldInfo> = {
   },
   dnsPrimaryUrl: {
     label: "Основной DNS, DoH/DoT URL",
-    tip: "Адрес DoH/DoT для основного DNS, если шифрованный. Можно оставить пустым — тогда используется только IP.",
+    tip: "Задаёт адрес зашифрованного сервера. Без шифрования запросы идут открытым текстом и провайдер их видит. Нужен только при типе DoH или DoT.",
     format: "https://…/dns-query  или  tls://host:853",
     alts: [
       { clients: "happ", value: "DomesticDNSDomain" },
@@ -100,17 +107,17 @@ export const FIELD_INFO: Record<FieldKey, FieldInfo> = {
   },
   dnsFallback: {
     label: "Резервный DNS",
-    tip: "DNS-сервер при недоступности основного.",
+    tip: "[[DNS-сервер]] для удалённых (Remote) запросов — доменов, уходящих через прокси. В Shadowrocket работает иначе: fallback при сбое основного DNS.",
     format: "IP-адрес, напр. 1.1.1.1",
     alts: [
       { clients: "happ", value: "RemoteDNSIp" },
       { clients: "Streisand, v2RayTun", value: "не используется в routing-объекте" },
-      { clients: "Shadowrocket", value: "fallback-dns-server (первый элемент)" },
+      { clients: "Shadowrocket", value: "fallback-dns-server" },
     ],
   },
   dnsFallbackUrl: {
     label: "Резервный DNS, DoH/DoT URL",
-    tip: "Адрес DoH/DoT для резервного DNS. Можно оставить пустым.",
+    tip: "Задаёт адрес зашифрованного сервера. Без шифрования запросы идут открытым текстом и провайдер их видит. Нужен только при типе DoH или DoT",
     format: "https://…/dns-query  или  tls://host:853",
     alts: [
       { clients: "happ", value: "RemoteDNSDomain" },
@@ -120,12 +127,12 @@ export const FIELD_INFO: Record<FieldKey, FieldInfo> = {
   },
   dnsType: {
     label: "Тип DNS-запроса",
-    tip: "Протокол DNS-запроса.",
+    tip: "Каким протоколом отправлять DNS-запросы. Влияет на приватность (видит ли провайдер ваши запросы) и на то, требуется ли DoH/DoT URL выше.",
     options: [
-      { value: "DoH", meaning: "DNS-over-HTTPS: запросы шифруются и идут по HTTPS (порт 443). Скрывает DNS от провайдера, сложнее заблокировать. Требует DoH URL." },
-      { value: "DoT", meaning: "DNS-over-TLS: запросы шифруются по TLS на отдельном порту 853. Тоже приватно, но порт легче фильтруется, чем 443." },
-      { value: "UDP", meaning: "Обычный незашифрованный DNS по UDP (порт 53). Быстро, но провайдер видит и может подменять запросы." },
-      { value: "TCP", meaning: "Незашифрованный DNS по TCP (порт 53). Как UDP, но по TCP — надёжнее при потере пакетов, чуть медленнее." },
+      { value: "DoH", meaning: "DNS-over-HTTPS: запросы шифруются и идут по HTTPS (порт 443). Провайдер не видит какие домены вы запрашиваете, сложно заблокировать. Требует заполненного DoH URL. Лучший выбор в большинстве случаев." },
+      { value: "DoT", meaning: "DNS-over-TLS: запросы шифруются по TLS на порту 853. Тоже приватно, но порт 853 легче заблокировать, чем 443. Требует заполненного DoT URL и открытого порта 853." },
+      { value: "UDP", meaning: "Обычный DNS по UDP (порт 53). Самый быстрый и совместимый, но провайдер видит все запросы и может их подменять. Подходит, если приватность не важна или DoH/DoT недоступны." },
+      { value: "TCP", meaning: "Обычный DNS по TCP (порт 53). Как UDP, но надёжнее при нестабильном соединении. Используется редко — как правило, только если UDP заблокирован." },
     ],
     alts: [
       { clients: "happ", value: "DomesticDNSType, RemoteDNSType" },
@@ -135,11 +142,11 @@ export const FIELD_INFO: Record<FieldKey, FieldInfo> = {
   },
   privateDirect: {
     label: "Приватные IP напрямую",
-    tip: "Включает direct-маршрут для RFC1918-диапазонов (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16 и т.п.). Влияет на все четыре формата одновременно.",
+    tip: "Включает direct-маршрут для [[RFC1918-диапазонов|Стандартные диапазоны локальных адресов: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16. Это адреса роутера, NAS, устройств в домашней сети — они никогда не маршрутизируются в интернет.]].",
     isToggle: true,
     options: [
-      { value: "включено", meaning: "Приватные/локальные IP (роутер, NAS, устройства в LAN) идут напрямую, минуя прокси. Обычно нужно, чтобы работали локальная сеть и админки устройств." },
-      { value: "выключено", meaning: "Приватные IP не получают отдельного direct-правила и попадают под общую логику маршрутизации — доступ к локальной сети может пойти через прокси и сломаться." },
+      { value: "включено", meaning: "Локальные устройства доступны напрямую, минуя прокси." },
+      { value: "выключено", meaning: "Локальные IP попадают под общую маршрутизацию — доступ к LAN может сломаться." },
     ],
     alts: [
       { clients: "happ", value: "добавляет диапазоны в DirectIp" },
@@ -149,7 +156,7 @@ export const FIELD_INFO: Record<FieldKey, FieldInfo> = {
   },
   geoipUrl: {
     label: "GeoipUrl",
-    tip: "URL .dat файла geoip-базы для Xray-ядра.",
+    tip: "Если заполнено — Xray скачает geoip-базу по этому URL вместо встроенной. Позволяет использовать более актуальную или кастомную базу соответствия IP → страна.",
     format: "прямая ссылка на .dat файл",
     alts: [
       { clients: "happ", value: "GeoipUrl" },
@@ -158,7 +165,7 @@ export const FIELD_INFO: Record<FieldKey, FieldInfo> = {
   },
   geositeUrl: {
     label: "GeositeUrl",
-    tip: "URL .dat файла geosite-базы для Xray-ядра.",
+    tip: "Если заполнено — Xray скачает geosite-базу по этому URL вместо встроенной. Позволяет использовать более актуальную или кастомную базу доменных категорий (geosite:ru, geosite:category-ads и т.п.).",
     format: "прямая ссылка на .dat файл",
     alts: [
       { clients: "happ", value: "GeositeUrl" },
@@ -331,3 +338,37 @@ export const FIELD_INFO: Record<FieldKey, FieldInfo> = {
     ],
   },
 };
+
+// Shared explanations for glossary terms referenced from `tip` as `[[термин]]`
+// without an inline body. Keeps a single definition reusable across fields.
+export const GLOSSARY: Record<string, string> = {
+  "DNS-сервер":
+    "Превращает имя сайта (example.com) в IP-адрес, к которому реально подключается устройство.",
+};
+
+// One piece of a parsed `tip`: either plain text, or a glossary term with the
+// tooltip body to reveal on hover.
+export type TipSegment =
+  | { text: string }
+  | { term: string; tooltip: string };
+
+const TIP_TERM_RE = /\[\[([^\]|]+?)(?:\|([^\]]+?))?\]\]/g;
+
+// Split a `tip` string into plain-text and glossary-term segments. A term
+// written `[[термин|объяснение]]` carries its own tooltip; `[[термин]]` falls
+// back to GLOSSARY (and, if missing there, renders as plain text).
+export function parseTip(tip: string): TipSegment[] {
+  const segments: TipSegment[] = [];
+  let last = 0;
+  for (const m of tip.matchAll(TIP_TERM_RE)) {
+    const [raw, term, inline] = m;
+    const start = m.index ?? 0;
+    if (start > last) segments.push({ text: tip.slice(last, start) });
+    const tooltip = (inline ?? GLOSSARY[term])?.trim();
+    if (tooltip) segments.push({ term, tooltip });
+    else segments.push({ text: term });
+    last = start + raw.length;
+  }
+  if (last < tip.length) segments.push({ text: tip.slice(last) });
+  return segments;
+}
