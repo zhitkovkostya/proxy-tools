@@ -65,7 +65,7 @@ export function RoutingProfileGenerator() {
   const singleLine = output.kind === "deeplink" && fmt === "uri";
 
   return (
-    <div className="flex h-screen flex-col p-2 lg:p-5">
+    <div className="flex h-[100dvh] flex-col p-2 lg:p-5">
       <div className="relative mx-auto flex min-h-0 w-full max-w-[1120px] flex-col rounded-sm border border-border-hi px-2 pb-2 pt-2 lg:px-4 lg:pb-2.5 lg:pt-4">
         <div className="absolute -top-[0.72em] left-4 bg-bg px-2 text-blue">
           proxy-config <span className="text-dim">·</span>{" "}
@@ -76,7 +76,7 @@ export function RoutingProfileGenerator() {
           <Tabs tabs={CLIENT_TABS} active={activeClient} onChange={selectClient} autoFocus />
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-5 lg:grid-cols-[1.05fr_1fr]">
+        <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_auto] gap-5 lg:grid-rows-1 lg:grid-cols-[1.05fr_1fr]">
           {/* ── форма ── */}
           <section
             ref={rowsRef}
