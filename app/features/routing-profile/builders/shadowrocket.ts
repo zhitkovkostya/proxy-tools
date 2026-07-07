@@ -1,4 +1,4 @@
-import { linesOf } from "~/lib/encoding";
+import { linesOf, nonEmpty } from "~/lib/encoding";
 import { PRIVATE_RANGES } from "../constants";
 import type { GeneratedOutput, OutboundTag, ProfileState } from "../types";
 import { withPrivateRule } from "./shared";
@@ -92,8 +92,8 @@ export function buildShadowrocketConf(state: ProfileState): string {
   withPrivateRule(state.rules, state.privateDirect).forEach((rule) => {
     const policy = srPolicyFor(rule.outboundTag);
     lines.push(`# ${rule.name}`);
-    rule.domains.forEach((d) => lines.push(srDomainToken(d, policy)));
-    rule.ips.forEach((ip) => lines.push(srIpToken(ip, policy)));
+    nonEmpty(rule.domains).forEach((d) => lines.push(srDomainToken(d, policy)));
+    nonEmpty(rule.ips).forEach((ip) => lines.push(srIpToken(ip, policy)));
   });
 
   lines.push("", "# Final", "FINAL,PROXY", "");

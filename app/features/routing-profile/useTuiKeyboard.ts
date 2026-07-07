@@ -83,12 +83,14 @@ export function useTuiKeyboard({
       const typing =
         el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement;
 
-      if (e.key === "ArrowDown" || (e.key === "Tab" && !e.shiftKey)) {
+      // Tab is left to the browser so buttons (add rule, reset, copy) and the
+      // client radiogroup stay reachable; ↑↓ still walk the form rows.
+      if (e.key === "ArrowDown") {
         e.preventDefault();
         move(1);
         return;
       }
-      if (e.key === "ArrowUp" || (e.key === "Tab" && e.shiftKey)) {
+      if (e.key === "ArrowUp") {
         e.preventDefault();
         move(-1);
         return;

@@ -1,3 +1,4 @@
+import { nonEmpty } from "~/lib/encoding";
 import { PRIVATE_RANGES } from "../constants";
 import type { OutboundTag, Rule } from "../types";
 
@@ -27,7 +28,9 @@ export type XrayRule = {
 
 export function ruleToXrayRule(rule: Rule): XrayRule {
   const r: XrayRule = { outboundTag: rule.outboundTag };
-  if (rule.domains.length) r.domain = rule.domains;
-  if (rule.ips.length) r.ip = rule.ips;
+  const domains = nonEmpty(rule.domains);
+  const ips = nonEmpty(rule.ips);
+  if (domains.length) r.domain = domains;
+  if (ips.length) r.ip = ips;
   return r;
 }

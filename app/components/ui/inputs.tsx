@@ -76,7 +76,9 @@ export interface SwitchProps {
   onChange: (checked: boolean) => void;
 }
 
-// Checkbox-style toggle: [x] / [ ]. Green when on.
+// Checkbox-style toggle: [x] / [ ]. Green when on. Toggles with Space (like a
+// native checkbox) when focused; Space is handled explicitly so the page never
+// scrolls and the toggle fires even while another keydown handler is active.
 export function Switch({ checked, onChange }: SwitchProps) {
   return (
     <button
@@ -84,6 +86,12 @@ export function Switch({ checked, onChange }: SwitchProps) {
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
+      onKeyDown={(e) => {
+        if (e.key === " " || e.key === "Spacebar") {
+          e.preventDefault();
+          onChange(!checked);
+        }
+      }}
       className={`font-medium outline-none ${checked ? "text-green" : "text-dim"}`}
     >
       {checked ? "[x]" : "[ ]"}

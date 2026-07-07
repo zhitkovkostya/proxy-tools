@@ -1,4 +1,4 @@
-import { utf8ToBase64, uuidv4 } from "~/lib/encoding";
+import { nonEmpty, utf8ToBase64, uuidv4 } from "~/lib/encoding";
 import type { GeneratedOutput, ProfileState } from "../types";
 import { withPrivateRule } from "./shared";
 
@@ -17,8 +17,10 @@ export function buildV2RayTunProfile(state: ProfileState) {
         type: "field",
         __name__: rule.name,
       };
-      if (rule.domains.length) r.domain = rule.domains;
-      if (rule.ips.length) r.ip = rule.ips;
+      const domains = nonEmpty(rule.domains);
+      const ips = nonEmpty(rule.ips);
+      if (domains.length) r.domain = domains;
+      if (ips.length) r.ip = ips;
       return r;
     }),
     name: state.name || "New Profile",

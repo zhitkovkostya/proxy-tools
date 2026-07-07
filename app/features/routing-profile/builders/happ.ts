@@ -1,4 +1,4 @@
-import { linesOf, utf8ToBase64 } from "~/lib/encoding";
+import { linesOf, nonEmpty, utf8ToBase64 } from "~/lib/encoding";
 import { PRIVATE_RANGES } from "../constants";
 import type { GeneratedOutput, ProfileState } from "../types";
 
@@ -7,9 +7,9 @@ import type { GeneratedOutput, ProfileState } from "../types";
 export function buildHappProfile(state: ProfileState): Record<string, unknown> {
   const { rules } = state;
   const domainsFor = (tag: string) =>
-    rules.filter((r) => r.outboundTag === tag).flatMap((r) => r.domains);
+    nonEmpty(rules.filter((r) => r.outboundTag === tag).flatMap((r) => r.domains));
   const ipsFor = (tag: string) =>
-    rules.filter((r) => r.outboundTag === tag).flatMap((r) => r.ips);
+    nonEmpty(rules.filter((r) => r.outboundTag === tag).flatMap((r) => r.ips));
 
   const directIp = ipsFor("direct");
   if (state.privateDirect) directIp.unshift(...PRIVATE_RANGES);

@@ -1,6 +1,6 @@
 import { Plus, Trash2 } from "lucide-react";
 import { Select, TextArea } from "~/components/ui/inputs";
-import { linesOf } from "~/lib/encoding";
+import { splitLinesRaw } from "~/lib/encoding";
 import type { ActiveId, FieldKey } from "../field-info";
 import { OUTBOUND_OPTIONS } from "../options";
 import type { Rule } from "../types";
@@ -51,14 +51,14 @@ export function RuleEditor({ rules, onChange, activeKey, onActivate }: RuleEdito
           <FieldRow {...rowProps("ruleDomain", idx)}>
             <TextArea
               value={rule.domains.join("\n")}
-              onChange={(e) => updateRule(idx, { domains: linesOf(e.target.value) })}
+              onChange={(e) => updateRule(idx, { domains: splitLinesRaw(e.target.value) })}
               placeholder={"domain:.ru\ngeosite:category-ru"}
             />
           </FieldRow>
           <FieldRow {...rowProps("ruleIp", idx)}>
             <TextArea
               value={rule.ips.join("\n")}
-              onChange={(e) => updateRule(idx, { ips: linesOf(e.target.value) })}
+              onChange={(e) => updateRule(idx, { ips: splitLinesRaw(e.target.value) })}
               placeholder={"10.0.0.0/8\ngeoip:ru"}
             />
           </FieldRow>

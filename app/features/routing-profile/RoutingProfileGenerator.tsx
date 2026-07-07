@@ -73,14 +73,14 @@ export function RoutingProfileGenerator() {
         </div>
 
         <div className="mb-3 mt-1 shrink-0">
-          <Tabs tabs={CLIENT_TABS} active={activeClient} onChange={selectClient} />
+          <Tabs tabs={CLIENT_TABS} active={activeClient} onChange={selectClient} autoFocus />
         </div>
 
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-5 lg:grid-cols-[1.05fr_1fr]">
           {/* ── форма ── */}
           <section
             ref={rowsRef}
-            className="min-h-0 min-w-0 overflow-auto pr-1 pt-2"
+            className="scroll-overlay min-h-0 min-w-0 overflow-auto pt-2 lg:pr-1"
           >
             <SharedSection store={store} activeKey={activeKey} onActivate={setActiveKey} />
             <RulesSection store={store} activeKey={activeKey} onActivate={setActiveKey} />

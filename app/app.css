@@ -46,3 +46,16 @@ body {
   background: var(--color-border);
   border-radius: 4px;
 }
+
+/* Overlay-скролл: полоса не резервирует место (нет отступа справа),
+   контент идёт до края. На узких экранах полосу прячем совсем —
+   тач-скролл всё равно работает. Desktop показывает полосу как обычно. */
+@media (max-width: 1023px) {
+  .scroll-overlay {
+    scrollbar-width: none; /* Firefox */
+  }
+  .scroll-overlay::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+}

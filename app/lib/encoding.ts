@@ -26,10 +26,24 @@ export function uuidv4(): string {
     .toUpperCase();
 }
 
-// Split a textarea value into trimmed, non-empty lines.
+// Split a textarea value into raw lines, preserving empties. Use this for the
+// value bound to a controlled textarea: dropping empty lines here fights the
+// user's typing (a trailing Enter would be reverted, trapping the caret).
+export function splitLinesRaw(str: string): string[] {
+  return str.split("\n");
+}
+
+// Split into trimmed, non-empty lines. Use this when consuming the value for
+// output (config generation), not while editing.
 export function linesOf(str: string): string[] {
   return str
     .split("\n")
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+// Drop blank entries from an already-split list (the editor keeps blanks so the
+// textarea stays typable; builders call this before emitting them).
+export function nonEmpty(lines: string[]): string[] {
+  return lines.map((s) => s.trim()).filter(Boolean);
 }
