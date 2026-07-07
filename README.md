@@ -39,4 +39,4 @@ npm run build
 
 ## Стек
 
-React Router v7 · TypeScript · TailwindCSS · Vite
+React · TypeScript · TailwindCSS · Vite

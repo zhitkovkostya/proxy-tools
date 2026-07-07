@@ -28,12 +28,12 @@ jobs:
       - run: npm ci
 
       - run: npm run build
-        env:
-          VITE_BASE_PATH: /proxy-tools
+
+      - run: cp dist/index.html dist/404.html
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: build/client
+          path: dist
 
   deploy:
     needs: build
