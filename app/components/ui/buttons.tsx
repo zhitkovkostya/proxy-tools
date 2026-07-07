@@ -23,6 +23,20 @@ export function SecondaryButton({
   );
 }
 
+// Filled call-to-action button (yellow fill, dark text). Used for the main
+// copy/download action in the output pane.
+export function AccentButton({
+  className = "",
+  ...props
+}: ComponentPropsWithoutRef<"button">) {
+  return (
+    <button
+      {...props}
+      className={`rounded-sm border border-yellow bg-yellow px-3 py-1.5 font-medium text-bg outline-none transition-colors hover:bg-transparent hover:text-yellow ${className}`}
+    />
+  );
+}
+
 // Copies text to the clipboard with a graceful fallback for insecure contexts.
 export async function copyText(text: string): Promise<void> {
   try {
@@ -47,12 +61,12 @@ export function CopyButton({ text, label }: { text: string; label: ReactNode }) 
   }, [text]);
 
   return (
-    <SecondaryButton
+    <AccentButton
       onClick={doCopy}
       className="flex w-full items-center justify-center gap-2"
     >
-      {copied ? <Check size={14} className="text-green" /> : <Copy size={14} />}
+      {copied ? <Check size={14} /> : <Copy size={14} />}
       {copied ? "скопировано" : <>копировать {label}</>}
-    </SecondaryButton>
+    </AccentButton>
   );
 }

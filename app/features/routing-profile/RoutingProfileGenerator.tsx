@@ -13,8 +13,11 @@ import type { ClientId } from "./types";
 import { useProfileState } from "./useProfileState";
 import { useTuiKeyboard } from "./useTuiKeyboard";
 
-// uri  → the ready-to-import deeplink (or the .conf text for Shadowrocket)
-// json → the underlying JSON / plist-preview text
+// The output pane always offers a two-way format switch in its top-right
+// corner (styled like uri/json). Its meaning depends on the active client:
+//   deeplink clients → "uri" (ready deeplink)  / "json" (underlying payload)
+//   Shadowrocket     → "uri" (file: download .conf) / "json" (text: raw config)
+// We reuse the same two state values so the keyboard `f` toggle keeps working.
 type OutFmt = "uri" | "json";
 
 export function RoutingProfileGenerator() {
@@ -38,6 +41,10 @@ export function RoutingProfileGenerator() {
     output.kind === "deeplink" && fmt === "uri" ? output.deepLink : output.text;
   const shownOutput = { ...output, text: shownText };
 
+  // Copy-button label tracks the shown format so it never says "JSON" while a
+  // URI is on screen.
+  const copyLabel = fmt === "uri" ? "URI" : output.copyLabel;
+
   const toggleFmt = () => setFmt((f) => (f === "uri" ? "json" : "uri"));
 
   // Keyboard navigation (↑↓ ←→ enter, f) ported from the mock.
@@ -49,7 +56,13 @@ export function RoutingProfileGenerator() {
   });
 
   const info = activeKey ? FIELD_INFO[fieldKeyOf(activeKey)] : null;
-  const canToggleFmt = output.kind === "deeplink";
+
+  // Labels for the corner format switch depend on the client kind.
+  const fmtLabels =
+    output.kind === "deeplink"
+      ? { uri: "uri", json: "json" }
+      : { uri: "файл", json: "текст" };
+  const singleLine = output.kind === "deeplink" && fmt === "uri";
 
   return (
     <div className="flex h-screen flex-col p-2 lg:p-5">
@@ -67,7 +80,7 @@ export function RoutingProfileGenerator() {
           {/* ── форма ── */}
           <section
             ref={rowsRef}
-            className="min-h-0 overflow-auto pr-1 pt-2"
+            className="min-h-0 min-w-0 overflow-auto pr-1 pt-2"
           >
             <SharedSection store={store} activeKey={activeKey} onActivate={setActiveKey} />
             <RulesSection store={store} activeKey={activeKey} onActivate={setActiveKey} />
@@ -77,47 +90,52 @@ export function RoutingProfileGenerator() {
               activeKey={activeKey}
               onActivate={setActiveKey}
             />
-            <div className="px-2 pb-2">
-              <SecondaryButton
-                onClick={store.reset}
-                className="flex w-full items-center justify-center gap-2"
-              >
-                <RotateCcw size={13} /> сбросить все поля
-              </SecondaryButton>
-            </div>
+            <SecondaryButton
+              onClick={store.reset}
+              className="flex w-full items-center justify-center gap-2"
+            >
+              <RotateCcw size={13} /> сбросить все поля
+            </SecondaryButton>
           </section>
 
-          {/* ── вывод + info ── */}
-          <section className="flex min-h-0 flex-col gap-5 overflow-auto pt-2">
-            <div className="relative shrink-0 rounded-sm border border-border bg-pane px-3 pb-3 pt-3.5">
-              <div className="absolute -top-[0.72em] left-3 bg-pane px-1.5 text-blue text-xs">
-                output
-              </div>
-              {canToggleFmt && (
-                <div className="absolute -top-[0.72em] right-3 bg-pane px-1.5 text-xs">
-                  <button
-                    onClick={() => setFmt("uri")}
-                    className={fmt === "uri" ? "text-yellow" : "text-dim"}
-                  >
-                    uri
-                  </button>
-                  <span className="text-border-hi"> / </span>
-                  <button
-                    onClick={() => setFmt("json")}
-                    className={fmt === "json" ? "text-yellow" : "text-dim"}
-                  >
-                    json
-                  </button>
-                </div>
-              )}
-              <OutputSection output={shownOutput} singleLine={canToggleFmt && fmt === "uri"} />
-            </div>
-
-            <div className="relative hidden shrink-0 rounded-sm border border-border bg-pane px-3 pb-3 pt-3.5 lg:block">
+          {/* ── info (сверху, тянется) + вывод (снизу, всегда виден) ── */}
+          <section className="flex min-h-0 min-w-0 flex-col gap-5 pt-2">
+            <div className="relative hidden min-h-0 flex-1 rounded-sm border border-border bg-pane px-3 pb-3 pt-3.5 lg:block">
               <div className="absolute -top-[0.72em] left-3 bg-pane px-1.5 text-blue text-xs">
                 info
               </div>
-              <FieldInfoPanel info={info} />
+              <div className="h-full overflow-auto">
+                <FieldInfoPanel info={info} />
+              </div>
+            </div>
+
+            <div className="relative flex max-h-[50vh] shrink-0 flex-col rounded-sm border border-border bg-pane px-3 pb-3 pt-3.5">
+              <div className="absolute -top-[0.72em] left-3 bg-pane px-1.5 text-blue text-xs">
+                output
+              </div>
+              <div className="absolute -top-[0.72em] right-3 bg-pane px-1.5 text-xs">
+                <button
+                  onClick={() => setFmt("uri")}
+                  className={fmt === "uri" ? "text-yellow" : "text-dim"}
+                >
+                  {fmtLabels.uri}
+                </button>
+                <span className="text-border-hi"> / </span>
+                <button
+                  onClick={() => setFmt("json")}
+                  className={fmt === "json" ? "text-yellow" : "text-dim"}
+                >
+                  {fmtLabels.json}
+                </button>
+              </div>
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                <OutputSection
+                  output={shownOutput}
+                  fmt={fmt}
+                  singleLine={singleLine}
+                  copyLabel={copyLabel}
+                />
+              </div>
             </div>
           </section>
         </div>
