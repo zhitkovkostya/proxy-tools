@@ -156,7 +156,7 @@ function StatusBar() {
         <span className="text-blue">←→</span> сменить
       </span>
       <span>
-        <span className="text-yellow">⏎</span> дальше
+        <span className="text-yellow">⌘⏎</span> дальше
       </span>
       <span>
         <span className="text-yellow">esc</span> из поля

@@ -94,6 +94,10 @@ export function useTuiKeyboard({
         return;
       }
       if (e.key === "Enter") {
+        // In a multiline field a bare Enter must insert a newline; only the
+        // Cmd/Ctrl+Enter chord advances. Everywhere else Enter moves on.
+        const multiline = el instanceof HTMLTextAreaElement;
+        if (multiline && !e.metaKey && !e.ctrlKey) return;
         e.preventDefault();
         move(1);
         return;
