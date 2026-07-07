@@ -2,8 +2,8 @@ import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
-export default defineConfig(({ command }) => ({
-  base: command === "build" ? "/proxy-tools/" : "/",
+export default defineConfig(() => ({
+  base: process.env.GITHUB_ACTIONS === "true" ? "/proxy-tools/" : "/",
   plugins: [tailwindcss(), reactRouter()],
   resolve: {
     tsconfigPaths: true,
